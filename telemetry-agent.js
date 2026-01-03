@@ -1,7 +1,7 @@
 const os = require('os');
 const axios = require('axios');
 
-const SERVER_URL = "https://your-hosted-server.onrender.com/api/telemetry";
+const SERVER_URL = "https://pixeltracker-kkl9.onrender.com/api/telemetry";
 
 function collectStats() {
   return {
