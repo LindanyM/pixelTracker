@@ -1,27 +1,52 @@
 const express = require('express');
 const fs = require('fs');
-const app = express();
+const path = require('path');
 
+const app = express();
 app.use(express.json());
 
-const LOG_FILE = "./telemetry.log";
+const PORT = process.env.PORT || 3000;
+const DATA_DIR = './data';
+const LOG_FILE = path.join(DATA_DIR, 'telemetry.log');
 
-app.post('/api/telemetry', (req, res) => {
-  const entry = { ...req.body, receivedAt: new Date() };
-  console.log("Received telemetry:", entry);
+// ensure storage exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR);
+}
 
-  fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + "\n");
-  res.send({ status: "ok" });
+// health check (important for Render)
+app.get('/health', (_, res) => {
+  res.status(200).send('OK');
 });
 
-app.get('/api/logs', (req, res) => {
+// 🔴 THIS IS THE CRITICAL ENDPOINT
+app.post('/api/telemetry', (req, res) => {
+  const entry = {
+    receivedAt: new Date().toISOString(),
+    ...req.body
+  };
+
+  console.log('Received telemetry from:', entry.source?.hostname);
+
+  fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + '\n');
+  res.status(200).json({ status: 'accepted' });
+});
+
+// view stored logs
+app.get('/api/telemetry', (req, res) => {
+  if (!fs.existsSync(LOG_FILE)) {
+    return res.json([]);
+  }
+
   const logs = fs.readFileSync(LOG_FILE, 'utf8')
     .trim()
-    .split("\n")
+    .split('\n')
     .map(JSON.parse);
 
   res.json(logs);
 });
 
-app.listen(3000, () => console.log("Telemetry server running"));
+app.listen(PORT, () => {
+  console.log(`Telemetry server listening on port ${PORT}`);
+});
 
