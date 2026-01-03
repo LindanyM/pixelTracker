@@ -1,8 +1,19 @@
-📊 pixelTracker
+# 📊 pixelTracker
 
-pixelTracker is a lightweight telemetry system designed to collect system statistics from machines (via a local Docker agent) and send them to a hosted server endpoint accessible anywhere.
+![Node.js](https://img.shields.io/badge/node-%3E%3D18-green)
+![Docker](https://img.shields.io/badge/docker-ready-blue)
+![Render](https://img.shields.io/badge/hosted%20on-render-purple)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-📁 Project Structure
+`pixelTracker` is a lightweight telemetry system that collects system statistics from machines (via a local Docker agent) and sends them to a hosted server endpoint that is accessible anywhere.
+
+It is designed to be **simple**, **portable**, and **extensible** — today for basic system stats, tomorrow for any telemetry source (e.g. Txstream, application metrics, custom sensors).
+
+---
+
+## 📁 Project Structure
+
+```text
 pixelTracker/
 │
 ├── server/                 👈 DEPLOY THIS TO RENDER
@@ -17,55 +28,134 @@ pixelTracker/
 │
 └── README.md
 
-🚀 Server (Hosted)
 
-Deploy only the server/ folder to Render
+┌─────────────────────┐
+│   Local Machine     │
+│                     │
+│  Docker Agent       │
+│  (agent.js)         │
+│                     │
+│  - Collects stats   │
+│  - Runs background  │
+│                     │
+└─────────┬───────────┘
+          │  HTTP POST
+          ▼
+┌────────────────────────────┐
+│ Hosted Telemetry Server    │
+│ (Render / Free Tier)       │
+│                            │
+│  /api/telemetry            │
+│                            │
+│  - Accepts telemetry       │
+│  - Logs / stores data      │
+│  - Ready for dashboards    │
+└────────────────────────────┘
 
-This exposes a public endpoint for receiving telemetry
+```
 
-The server is reachable from anywhere
+# 🚀 Server (Hosted on Render)
+## What gets deployed
+- Only the server/ folder
+- Runs as a Node.js Web Service
+- Must bind to process.env.PORT
 
-🐳 Agent (Local / Machine Monitoring)
+## Purpose
+- Receives telemetry from agents
+- Exposes a public endpoint:
 
-To run the agent on a specific machine and send stats to the hosted server
-(later this can be extended to platforms like Txstream)
+``` POST /api/telemetry```
+- Can later store data in files or databases
 
-Build and run the agent
+# 🐳 Agent (Local / Machine Monitoring)
+The agent runs on any machine you want to monitor.
+- Runs in Docker
+- Sends telemetry to the hosted server
+- Runs silently in the background
+- Auto-restarts if the machine reboots
+
+▶️ Build and run the agent
+```
 cd agent
 docker build -t telemetry-agent .
 docker run -d \
   --restart unless-stopped \
   -e SERVER_URL=https://YOUR-APP.onrender.com/api/telemetry \
   telemetry-agent
+```
+✅ The agent will immediately start sending telemetry
+✅ No open ports required on the local machine
 
-
-The agent runs in the background and continuously sends telemetry data to the server.
-
-⚙️ Environment Variables (Optional – Recommended)
-
-Create an example environment file and commit it:
+# ⚙️ Environment Variables (Recommended)
+Create and commit an example environment file:
 
 .env.example
-SERVER_URL=https://your-app.onrender.com/api/telemetry
-
-
+```SERVER_URL=https://your-app.onrender.com/api/telemetry```
 This documents required configuration without exposing secrets.
 
-🧪 Testing the API
+# 🔌 API Specification
+Endpoint
+``` http
+POST /api/telemetry
+```
 
-You can manually test the telemetry endpoint using curl:
+Headers
+```http
+Copy code
+Content-Type: application/json
+```
 
-curl -X POST SERVER_URL \
+Payload (example)
+```json
+Copy code
+{
+  "name": "my-server",
+  "cpuC": 8,
+  "cpuL": 63,
+  "tRam": 31387,
+  "uRam": 16382,
+  "disk": 50400,
+  "timestamp": "2026-01-03T07:26:04.820Z"
+}
+```
+
+Response
+```json
+Copy code
+{
+  "status": "accepted"
+}
+```
+
+🧪 Test the API Manually
+You can test the server without Docker using curl:
+
+```
+curl -X POST https://your-app.onrender.com/api/telemetry \
   -H "Content-Type: application/json" \
   -d '{"source":{"hostname":"render-test"}}'
+```
 
-Expected response
+Expected Response
+json
+```
 {"status":"accepted"}
+```
 
-📌 Notes
+# 📈 Future Roadmap
+Planned extensions (no architecture changes needed):
 
-The server runs as a Node.js web service on Render
+- 📊 Persistent storage (SQLite / PostgreSQL)
+- 📉 Grafana / dashboard UI
+- 🔔 Alerts & thresholds
+- 🔐 API authentication
+- 🧩 Plugin-based telemetry sources
+- 🌐 Txstream / external metric sources
 
-The agent runs in Docker on any machine you want to monitor
+# 📝 License
+MIT License — free to use, modify, and distribute.
 
-Future telemetry types can be added without changing the architecture
+# 🙌 Author
+Built by Lindani Mabaso, James Eckhardt
+Software Engineer • Cloud • Backend • Systems
+
