@@ -15,14 +15,14 @@ pixelTracker/
 
 To run the aagent on that specific machine to monitor and send the stats from  ( later could be tXstream )
 
-``
+
 cd agent
 docker build -t telemetry-agent .
 docker run -d \
   --restart unless-stopped \
   -e SERVER_URL=https://YOUR-APP.onrender.com/api/telemetry \
   telemetry-agent
-``
+
 
 Optional (recommended)
 
