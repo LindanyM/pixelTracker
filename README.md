@@ -101,13 +101,11 @@ POST /api/telemetry
 
 Headers
 ```http
-Copy code
 Content-Type: application/json
 ```
 
 Payload (example)
 ```json
-Copy code
 {
   "name": "my-server",
   "cpuC": 8,
@@ -121,7 +119,6 @@ Copy code
 
 Response
 ```json
-Copy code
 {
   "status": "accepted"
 }
