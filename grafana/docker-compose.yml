@@ -1,0 +1,39 @@
+services:
+  loki:
+    image: grafana/loki:2.9.4
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+
+  grafana:
+    image: grafana/grafana:10.2.3
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+
+  promtail:
+    image: grafana/promtail:2.9.4
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+
+  agent:
+    build: ../agent
+    container_name: pixeltracker-agent
+    environment:
+      - SERVER_URL=https://pixeltracker-1.onrender.com/api/telemetry
+
+  json-exporter:
+    image: prometheuscommunity/json-exporter
+    container_name: json-exporter
+    ports:
+      - "7979:7979"
+    volumes:
+      - ./json-exporter/config.yml:/config.yml
+    command:
+      - '--config.file=/config.yml'
